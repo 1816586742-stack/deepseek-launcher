@@ -1,0 +1,94 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build Windows
+        run: |
+          cd DshLauncher.Windows
+          dotnet publish -c Release -r win-x64 --self-contained false -o ../dist/windows
+          cp start-dsh.vbs ../dist/windows/
+      - name: Package
+        run: Compress-Archive -Path dist/windows/* -DestinationPath dist/dsh-launcher-windows.zip
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/dsh-launcher-windows.zip
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build macOS
+        run: |
+          cd DshLauncher.MacOS
+          swiftc main.swift -o dsh-launcher -framework Cocoa -framework WebKit -O
+          chmod +x dsh-launcher
+          cp start-dsh.sh .
+          mkdir -p ../dist/macos
+          cp dsh-launcher start-dsh.sh ../dist/macos/
+      - name: Package
+        run: cd dist && tar -czf dsh-launcher-macos.tar.gz -C macos .
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/dsh-launcher-macos.tar.gz
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi python3-gi-cairo gir1.2-webkit-6.0 gir1.2-gtk-4.0
+      - name: Package
+        run: |
+          mkdir -p dist/linux
+          cp DshLauncher.Linux/launcher.py dist/linux/
+          cp DshLauncher.Linux/start-dsh.sh dist/linux/
+          chmod +x dist/linux/launcher.py dist/linux/start-dsh.sh
+          cd dist && tar -czf dsh-launcher-linux.tar.gz -C linux .
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: dist/dsh-launcher-linux.tar.gz
+
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/*.zip
+            artifacts/*.tar.gz
