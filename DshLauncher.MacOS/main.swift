@@ -55,6 +55,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Open external links in Safari
         webView.navigationDelegate = self
 
+        // Set app icon from bundled image
+        if let iconPath = Bundle.main.path(forResource: "icon", ofType: "png"),
+           let image = NSImage(contentsOfFile: iconPath) {
+            NSApp.applicationIconImage = image
+        }
+
         window.makeKeyAndOrderFront(nil)
         webView.load(URLRequest(url: URL(string: defaultUrl)!))
     }

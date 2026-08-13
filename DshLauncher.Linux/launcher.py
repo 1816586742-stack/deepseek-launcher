@@ -79,6 +79,11 @@ def main():
     web.connect("decide-policy", on_decide_policy)
     web.load_uri(DEFAULT_URL)
 
+    # Set window icon
+    icon_path = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "icon.jpg")
+    if os.path.exists(icon_path):
+        win.set_icon_name(icon_path)
+
     win.set_child(web)
     win.connect("destroy", lambda _: sys.exit(0))
     win.present()
