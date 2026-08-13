@@ -8,7 +8,8 @@ namespace DshLauncher;
 
 internal static class Program
 {
-    private const string DefaultUrl = "http://127.0.0.1:3080";
+    private static int Port => SettingsManager.Port;
+    private static string DefaultUrl => $"http://127.0.0.1:{Port}";
     private const int SW_RESTORE = 9;
 
     [DllImport("user32.dll")]
@@ -34,18 +35,18 @@ internal static class Program
         }
 
         // Auto-start dsh if port not open
-        if (!PortOpen(3080))
+        if (!PortOpen(Port))
         {
             var vbs = Path.Combine(AppContext.BaseDirectory, "start-dsh.vbs");
-            if (File.Exists(vbs))
+            if (File.Exists(vbs) && SettingsManager.AutoStartDsh)
                 Process.Start("wscript.exe", $"\"{vbs}\"");
 
             // Wait up to 90 seconds
-            for (var i = 0; i < 90 && !PortOpen(3080); i++)
+            for (var i = 0; i < 90 && !PortOpen(Port); i++)
                 Thread.Sleep(1000);
         }
 
-        if (!PortOpen(3080))
+        if (!PortOpen(Port))
         {
             MessageBox.Show("dsh service not available. Check: %USERPROFILE%\\.dsh",
                 "DSH Launcher", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -54,6 +55,9 @@ internal static class Program
 
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
+
+        // Check for updates in background (non-blocking)
+        _ = Task.Run(async () => await UpdateChecker.CheckAndPromptAsync());
 
         // Load icon from file (DeepSeek whale logo)
         Icon? icon = null;
@@ -76,6 +80,13 @@ internal static class Program
 
         var web = new WebView2 { Dock = DockStyle.Fill };
         form.Controls.Add(web);
+
+        // Context menu: Settings / Exit
+        var menu = new ContextMenuStrip();
+        menu.Items.Add("Settings", null, (_, _) => SettingsManager.ShowDialog());
+        menu.Items.Add("-");
+        menu.Items.Add("Exit", null, (_, _) => { web.Dispose(); Application.Exit(); });
+        form.ContextMenuStrip = menu;
 
         form.Load += async (_, _) =>
         {
