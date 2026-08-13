@@ -57,6 +57,11 @@ python3 launcher.py
 4. 打开系统 WebView 加载 `http://127.0.0.1:3080`
 5. 外部链接 → 系统默认浏览器
 
+## 免责声明
+
+本项目是独立的第三方工具,与 DeepSeek / DeepSeek AI 官方无关。
+应用图标使用了 DeepSeek 品牌标识,版权归 DeepSeek 所有,仅作个人本地使用。
+
 ## 许可证
 
 MIT

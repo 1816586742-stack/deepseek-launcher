@@ -55,12 +55,23 @@ internal static class Program
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
 
+        // Load icon from file (DeepSeek whale logo)
+        Icon? icon = null;
+        try
+        {
+            var iconPath = Path.Combine(AppContext.BaseDirectory, "app.ico");
+            if (File.Exists(iconPath))
+                icon = new Icon(iconPath);
+        }
+        catch { /* ignore icon load errors */ }
+
         var form = new Form
         {
             Text = "DeepSeek Harness",
             ClientSize = new Size(1280, 840),
             StartPosition = FormStartPosition.CenterScreen,
             MinimumSize = new Size(800, 600),
+            Icon = icon ?? SystemIcons.Application,
         };
 
         var web = new WebView2 { Dock = DockStyle.Fill };
