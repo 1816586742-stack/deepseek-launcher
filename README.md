@@ -1,15 +1,17 @@
 # DSH Launcher
 
-轻量级 DeepSeek Harness 启动器 — 全平台,零依赖(仅需 Node.js)。
+轻量级 DeepSeek Harness 全平台启动器。
 
 ## 版本
 
-| 版本 | 体积 | 适用 |
-|---|---|---|
-| 脚本版 | 0 KB | 开发者(已有 Node.js) |
-| 桌面版 | 672KB~2MB | 普通用户(计划中) |
+| 版本 | 平台 | 体积 | 依赖 |
+|---|---|---|---|
+| 脚本版 | Win/Mac/Linux | 0 KB | Node.js |
+| Windows 桌面版 | Windows | ~150 行 C# | .NET + WebView2 |
+| macOS 桌面版 | macOS | ~120 行 Swift | Swift + WKWebView |
+| Linux 桌面版 | Linux | ~100 行 Python | Python + GTK4 + WebKit |
 
-## 快速开始
+## 快速开始(脚本版)
 
 ### Windows
 双击 `scripts/start-dsh.bat`
@@ -20,22 +22,40 @@ chmod +x scripts/start-dsh.sh
 ./scripts/start-dsh.sh
 ```
 
+## 桌面版(Windows)
+
+```bash
+cd DshLauncher.Windows
+dotnet run
+```
+
+需要 .NET SDK 10 + WebView2 Runtime(Windows 11 内置)。
+
+## 桌面版(macOS)
+
+```bash
+cd DshLauncher.MacOS
+swiftc main.swift -o dsh-launcher -framework Cocoa -framework WebKit
+./dsh-launcher
+```
+
+## 桌面版(Linux)
+
+```bash
+cd DshLauncher.Linux
+pip install pygobject
+python3 launcher.py
+```
+
+需要 GTK4 + WebKitGTK(`sudo apt install libgtk-4-dev libwebkitgtk-6.0-dev`)。
+
 ## 工作原理
 
-1. 检查 Node.js 是否安装
-2. 通过 `npx -y @deepseek-ai/dsh web` 自动拉起 dsh
-3. 等待服务就绪
-4. 打开系统浏览器访问 `http://127.0.0.1:3080`
-
-## 前置条件
-
-- [Node.js](https://nodejs.org) 18+
-- [DeepSeek API Key](https://platform.deepseek.com)
-
-## 停止服务
-
-- Windows: 关闭命令行窗口,或在任务管理器结束 npx 进程
-- macOS/Linux: `Ctrl+C`
+1. 检测 dsh 端口(默认 3080)是否已开放
+2. 没开 → 通过 `npx -y @deepseek-ai/dsh web` 自动拉起
+3. 等待服务就绪(最多 90 秒)
+4. 打开系统 WebView 加载 `http://127.0.0.1:3080`
+5. 外部链接 → 系统默认浏览器
 
 ## 许可证
 
