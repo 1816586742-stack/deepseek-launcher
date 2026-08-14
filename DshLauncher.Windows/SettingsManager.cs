@@ -89,4 +89,47 @@ internal static class SettingsManager
 
         form.ShowDialog();
     }
+
+    /// <summary>
+    /// Get a timestamp value from settings.
+    /// </summary>
+    public static DateTime? GetTimestamp(string key)
+    {
+        try
+        {
+            if (File.Exists(SettingsPath))
+            {
+                var json = File.ReadAllText(SettingsPath);
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty(key, out var val) && val.GetString() is string s)
+                    return DateTime.Parse(s);
+            }
+        }
+        catch { /* ignore */ }
+        return null;
+    }
+
+    /// <summary>
+    /// Set a timestamp value in settings.
+    /// </summary>
+    public static void SetTimestamp(string key, DateTime value)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+            var json = File.Exists(SettingsPath) ? File.ReadAllText(SettingsPath) : "{}";
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var obj = doc.RootElement;
+            // Rebuild JSON with new key
+            var entries = new List<string>();
+            foreach (var prop in obj.EnumerateObject())
+            {
+                if (prop.Name != key)
+                    entries.Add($"\"{prop.Name}\":\"{prop.Value}\"");
+            }
+            entries.Add($"\"{key}\":\"{value:O}\"");
+            File.WriteAllText(SettingsPath, "{" + string.Join(",", entries) + "}");
+        }
+        catch { /* ignore */ }
+    }
 }
