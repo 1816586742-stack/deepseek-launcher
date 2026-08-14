@@ -38,3 +38,6 @@ package-lock.json
 .DS_Store
 Thumbs.db
 create-release.js
+.agents/
+.claude/
+skills-lock.json
