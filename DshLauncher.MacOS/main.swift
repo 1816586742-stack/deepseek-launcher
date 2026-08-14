@@ -4,26 +4,12 @@ import WebKit
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     var webView: WKWebView!
-    let defaultUrl = "http://127.0.0.1:3080"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Auto-start dsh if not running
         if !portOpen(port: 3080) {
             startDsh()
-            // Wait up to 90 seconds
-            for _ in 0..<90 {
-                Thread.sleep(forTimeInterval: 1)
-                if portOpen(port: 3080) { break }
-            }
-        }
-
-        guard portOpen(port: 3080) else {
-            let alert = NSAlert()
-            alert.messageText = "dsh service not available"
-            alert.informativeText = "Check: ~/.dsh"
-            alert.runModal()
-            NSApp.terminate(nil)
-            return
+            Thread.sleep(forTimeInterval: 5)
         }
 
         // Create window
@@ -34,26 +20,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         window.title = "DeepSeek Harness"
-        window.minSize = NSSize(width: 800, height: 600)
         window.center()
 
         // Create webview
-        let config = WKWebViewConfiguration()
-        webView = WKWebView(frame: window.contentView!.bounds, configuration: config)
+        webView = WKWebView(frame: window.contentView!.bounds)
         webView.autoresizingMask = [.width, .height]
         window.contentView!.addSubview(webView)
-
-        // Open external links in Safari
         webView.navigationDelegate = self
 
-        // Set app icon from bundled image
-        if let iconPath = Bundle.main.path(forResource: "icon", ofType: "png"),
-           let image = NSImage(contentsOfFile: iconPath) {
-            NSApp.applicationIconImage = image
-        }
-
         window.makeKeyAndOrderFront(nil)
-        webView.load(URLRequest(url: URL(string: defaultUrl)!))
+        webView.load(URLRequest(url: URL(string: "http://127.0.0.1:3080")!))
     }
 
     func startDsh() {
@@ -68,13 +44,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         addr.sin_family = sa_family_t(AF_INET)
         addr.sin_port = UInt16(port).bigEndian
         addr.sin_addr.s_addr = inet_addr("127.0.0.1")
-        let fd = Darwin.socket(AF_INET, SOCK_STREAM, 0)
-        defer { Darwin.close(fd) }
-        return Darwin.connect(fd, sockaddr_cast(&addr), socklen_t(MemoryLayout<sockaddr_in>.size)) == 0
-    }
-
-    func sockaddr_cast(_ addr: inout sockaddr_in) -> UnsafePointer<sockaddr> {
-        return withUnsafePointer(to: &addr) { UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self) }
+        let sock = socket(AF_INET, SOCK_STREAM, 0)
+        defer { close(sock) }
+        return withUnsafePointer(to: &addr) {
+            connect(sock, UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self), socklen_t(MemoryLayout<sockaddr_in>.size))
+        } == 0
     }
 }
 
@@ -89,7 +63,6 @@ extension AppDelegate: WKNavigationDelegate {
     }
 }
 
-// Entry point using NSApplicationMain
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate
