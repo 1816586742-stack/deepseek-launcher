@@ -81,9 +81,10 @@ internal static class Program
         var web = new WebView2 { Dock = DockStyle.Fill };
         form.Controls.Add(web);
 
-        // Context menu: Settings / Exit
+        // Context menu: Settings / About / Exit
         var menu = new ContextMenuStrip();
         menu.Items.Add("Settings", null, (_, _) => SettingsManager.ShowDialog());
+        menu.Items.Add("About", null, (_, _) => { var dlg = new AboutDialog(); dlg.ShowDialog(); });
         menu.Items.Add("-");
         menu.Items.Add("Exit", null, (_, _) => { web.Dispose(); Application.Exit(); });
         form.ContextMenuStrip = menu;
