@@ -1,7 +1,6 @@
 import Cocoa
 import WebKit
 
-@main
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     var webView: WKWebView!
@@ -65,13 +64,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func portOpen(port: Int) -> Bool {
-        var socket = sockaddr_in()
-        socket.sin_family = sa_family_t(AF_INET)
-        socket.sin_port = UInt16(port).bigEndian
-        socket.sin_addr.s_addr = inet_addr("127.0.0.1")
-        let fd = socket(AF_INET, SOCK_STREAM, 0)
-        defer { close(fd) }
-        return connect(fd, sockaddr_cast(&socket), socklen_t(MemoryLayout<sockaddr_in>.size)) == 0
+        var addr = sockaddr_in()
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_port = UInt16(port).bigEndian
+        addr.sin_addr.s_addr = inet_addr("127.0.0.1")
+        let fd = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        defer { Darwin.close(fd) }
+        return Darwin.connect(fd, sockaddr_cast(&addr), socklen_t(MemoryLayout<sockaddr_in>.size)) == 0
     }
 
     func sockaddr_cast(_ addr: inout sockaddr_in) -> UnsafePointer<sockaddr> {
@@ -89,3 +88,9 @@ extension AppDelegate: WKNavigationDelegate {
         }
     }
 }
+
+// Entry point using NSApplicationMain
+let app = NSApplication.shared
+let delegate = AppDelegate()
+app.delegate = delegate
+app.run()
