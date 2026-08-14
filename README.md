@@ -99,9 +99,19 @@ DSH Launcher 不会自动检查更新。手动更新:
 
 ## 免责声明
 
-本项目是独立的第三方工具,与 DeepSeek / DeepSeek AI 官方无关。
-应用图标使用了 DeepSeek 品牌标识,版权归 DeepSeek 所有,仅作个人本地使用。
+本项目是独立的第三方工具，与 DeepSeek / DeepSeek AI 官方无关。
 
-## 许可证
+## 图标说明
 
-[MIT](LICENSE)
+应用图标使用了 [DeepSeek Harness 鲸鱼娘图标](https://github.com/DeepSeekHarness/WhaleGirl-Icon)，基于 DeepSeek 品牌标识创作。
+
+- 许可证：CC BY-NC-SA 4.0
+- 署名：DeepSeek Harness 鲸鱼娘图标项目
+- 仅限非商业用途
+- 衍生作品必须使用相同许可证
+
+详见 [WHALE-GIRL-LICENSE.md](assets/WHALE-GIRL-LICENSE.md)
+
+## 软件许可证
+
+本软件使用 [MIT](LICENSE) 许可证。
