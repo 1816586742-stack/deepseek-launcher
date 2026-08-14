@@ -11,7 +11,7 @@ namespace DshLauncher;
 internal static class UpdateChecker
 {
     private const string Repo = "1816586742-stack/dsh-launcher-cross";
-    internal const string CurrentVersion = "0.3.4";
+    internal const string CurrentVersion = "1.0.2";
 
     /// <summary>
     /// Check for updates and show dialog if available.
