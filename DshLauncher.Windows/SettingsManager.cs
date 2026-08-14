@@ -87,8 +87,8 @@ internal static class SettingsManager
         {
             btnCheckUpdate.Enabled = false;
             btnCheckUpdate.Text = "Checking...";
-            var hasUpdate = await UpdateChecker.CheckAndPromptAsync();
-            btnCheckUpdate.Text = hasUpdate ? "Update available!" : "Up to date";
+            await UpdateChecker.CheckAndPromptAsync();
+            btnCheckUpdate.Text = "Check complete";
             btnCheckUpdate.Enabled = true;
         };
 
@@ -104,6 +104,48 @@ internal static class SettingsManager
         form.AcceptButton = btnSave;
 
         form.ShowDialog();
+    }
+
+    /// <summary>
+    /// Get the skipped version string from settings.
+    /// </summary>
+    public static string? GetSkippedVersion()
+    {
+        try
+        {
+            if (File.Exists(SettingsPath))
+            {
+                var json = File.ReadAllText(SettingsPath);
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("skippedVersion", out var val))
+                    return val.GetString();
+            }
+        }
+        catch { /* ignore */ }
+        return null;
+    }
+
+    /// <summary>
+    /// Set the skipped version string in settings.
+    /// </summary>
+    public static void SetSkippedVersion(string version)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+            var json = File.Exists(SettingsPath) ? File.ReadAllText(SettingsPath) : "{}";
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var obj = doc.RootElement;
+            var entries = new List<string>();
+            foreach (var prop in obj.EnumerateObject())
+            {
+                if (prop.Name != "skippedVersion")
+                    entries.Add($"\"{prop.Name}\":\"{prop.Value}\"");
+            }
+            entries.Add($"\"skippedVersion\":\"{version}\"");
+            File.WriteAllText(SettingsPath, "{" + string.Join(",", entries) + "}");
+        }
+        catch { /* ignore */ }
     }
 
     /// <summary>

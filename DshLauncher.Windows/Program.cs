@@ -56,6 +56,9 @@ internal static class Program
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
 
+        // Check for updates in background (shows dialog if new version available)
+        _ = Task.Run(async () => await UpdateChecker.CheckAndPromptAsync());
+
         // Load icon from file (DeepSeek whale logo)
         Icon? icon = null;
         try

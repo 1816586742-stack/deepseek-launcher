@@ -5,27 +5,26 @@ using System.Text.Json;
 namespace DshLauncher;
 
 /// <summary>
-/// Checks GitHub Releases for updates and prompts user to download.
+/// Update dialog with version comparison and changelog display.
+/// Inspired by Bili23-Downloader update UI.
 /// </summary>
 internal static class UpdateChecker
 {
     private const string Repo = "1816586742-stack/dsh-launcher-cross";
-    private const string CurrentVersion = "0.2.0";
-    private const string LastCheckKey = "LastUpdateCheck";
+    private const string CurrentVersion = "0.2.5";
 
     /// <summary>
-    /// Check for updates in background. Only checks once per day.
+    /// Check for updates and show dialog if available.
+    /// Respects "skip this version" setting.
     /// </summary>
-    public static async Task<bool> CheckAndPromptAsync()
+    public static async Task CheckAndPromptAsync()
     {
         try
         {
-            // Only check once per day
-            var lastCheck = SettingsManager.GetTimestamp(LastCheckKey);
-            if (lastCheck.HasValue && (DateTime.Now - lastCheck.Value).TotalDays < 1)
-                return false;
-
-            SettingsManager.SetTimestamp(LastCheckKey, DateTime.Now);
+            // Check if this version was skipped
+            var skippedVersion = SettingsManager.GetSkippedVersion();
+            if (skippedVersion == CurrentVersion)
+                return; // User chose to skip this version
 
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             http.DefaultRequestHeaders.UserAgent.ParseAdd("DSH-Launcher");
@@ -38,17 +37,26 @@ internal static class UpdateChecker
             var latestVersion = latestTag.TrimStart('v');
 
             if (CompareVersions(latestVersion, CurrentVersion) <= 0)
-                return false; // Up to date
+                return; // Up to date
 
-            // Ask user
+            // Parse changelog
             var body = doc.RootElement.TryGetProperty("body", out var b) ? b.GetString() ?? "" : "";
-            var result = MessageBox.Show(
-                $"New version available: v{latestVersion}\n\n{body}\n\nOpen download page?",
-                "DSH Launcher — Update Available",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Information);
 
-            if (result == DialogResult.Yes)
+            // Show update dialog on UI thread
+            var result = false;
+            var skipVersion = false;
+
+            var dialog = new UpdateDialog(CurrentVersion, latestVersion, body);
+            var dialogResult = dialog.ShowDialog();
+            result = dialogResult == System.Windows.Forms.DialogResult.Yes;
+            skipVersion = dialog.SkipThisVersion;
+
+            if (skipVersion)
+            {
+                SettingsManager.SetSkippedVersion(latestVersion);
+            }
+
+            if (result)
             {
                 Process.Start(new ProcessStartInfo
                 {
@@ -56,12 +64,10 @@ internal static class UpdateChecker
                     UseShellExecute = true
                 });
             }
-
-            return true;
         }
         catch
         {
-            return false; // Network error, ignore
+            // Network error, ignore silently
         }
     }
 
