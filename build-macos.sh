@@ -21,7 +21,7 @@ swiftc main.swift -o dsh-launcher -framework Cocoa -framework WebKit -O
 mkdir -p ../dist
 cp dsh-launcher ../dist/
 cp start-dsh.sh ../dist/
-cp ../assets/icon.jpg ../dist/icon.png 2>/dev/null || true
+cp ../assets/icon.jpg ../dist/icon.jpg 2>/dev/null || true
 chmod +x ../dist/dsh-launcher ../dist/start-dsh.sh
 
 cd ..

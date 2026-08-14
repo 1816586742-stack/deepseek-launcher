@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.3.4 (2026-08-14)
+
+### Added
+- About dialog with version info, license, and links (Bili23-style)
+- Professional update dialog with version comparison and changelog
+- "Skip this version" functionality
+- Security policy (SECURITY.md)
+- Windows build script (build-windows.sh)
+
+### Fixed
+- macOS Swift compilation errors
+- exe icon not displaying
+- Version numbers aligned across all files
+- SettingsManager JSON serialization (now uses System.Text.Json)
+- Removed tracked .csproj.user file
+- Expanded .gitignore
+
 ## v0.2.0 (2026-08-14)
 
 ### Added

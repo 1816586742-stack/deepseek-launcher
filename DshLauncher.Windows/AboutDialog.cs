@@ -30,7 +30,7 @@ internal class AboutDialog : Form
         // Version info
         var lblVersion = new Label
         {
-            Text = "版本 0.3.0\n基于 .NET 10 和 WebView2 构建",
+            Text = $"版本 {UpdateChecker.CurrentVersion}\n基于 .NET 10 和 WebView2 构建",
             Font = new Font("Microsoft YaHei", 10F),
             ForeColor = Color.FromArgb(180, 180, 180),
             Location = new Point(24, 65),

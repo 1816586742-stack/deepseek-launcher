@@ -39,7 +39,14 @@ internal static class SettingsManager
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
-            var json = $"{{\"port\":{Port},\"autoStartDsh\":{AutoStartDsh.ToString().ToLower()}}}";
+            var dict = new Dictionary<string, object>
+            {
+                ["port"] = Port,
+                ["autoStartDsh"] = AutoStartDsh
+            };
+            var skipped = GetSkippedVersion();
+            if (skipped != null) dict["skippedVersion"] = skipped;
+            var json = System.Text.Json.JsonSerializer.Serialize(dict, new System.Text.Json.JsonSerializerOptions { WriteIndented = false });
             File.WriteAllText(SettingsPath, json);
         }
         catch { /* ignore */ }

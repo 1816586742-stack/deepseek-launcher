@@ -1,3 +1,39 @@
+# Build outputs
 bin/
 obj/
 dist/
+out/
+
+# .NET
+*.csproj.user
+.vs/
+*.user
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# macOS
+.DS_Store
+*.swp
+
+# Windows
+Thumbs.db
+desktop.ini
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.user
+
+# Node
+node_modules/
+package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db
