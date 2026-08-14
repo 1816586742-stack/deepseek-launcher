@@ -38,7 +38,6 @@ jobs:
           cd DshLauncher.MacOS
           swiftc main.swift -o dsh-launcher -framework Cocoa -framework WebKit -O
           chmod +x dsh-launcher
-          cp start-dsh.sh .
           mkdir -p ../dist/macos
           cp dsh-launcher start-dsh.sh ../dist/macos/
       - name: Package
