@@ -37,9 +37,9 @@ chmod +x scripts/start-dsh.sh
 
 | 文件 | 平台 | 说明 |
 |---|---|---|
-| `dsh-launcher-v0.2.0-win64.tar.gz` | Windows | 解压运行 DshLauncher.Windows.exe |
-| `dsh-launcher-macos.tar.gz` | macOS | 解压后编译或直接运行脚本 |
-| `dsh-launcher-linux.tar.gz` | Linux | 解压后运行 launcher.py |
+| `dsh-launcher_win_x64.zip` | Windows | 解压运行 DshLauncher.Windows.exe |
+| `dsh-launcher_macos.tar.gz` | macOS | 解压后编译或直接运行脚本 |
+| `dsh-launcher_linux.tar.gz` | Linux | 解压后运行 launcher.py |
 
 ### 从源码编译
 

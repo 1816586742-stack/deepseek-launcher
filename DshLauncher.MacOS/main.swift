@@ -4,10 +4,24 @@ import WebKit
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     var webView: WKWebView!
+    let port: Int
+    
+    override init() {
+        // Read port from config file, default 3080
+        let configPath = NSHomeDirectory() + "/.dsh-launcher/config.json"
+        var p = 3080
+        if let data = FileManager.default.contents(atPath: configPath),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let configPort = json["port"] as? Int {
+            p = configPort
+        }
+        port = p
+        super.init()
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Auto-start dsh if not running
-        if !portOpen(port: 3080) {
+        if !portOpen(port: port) {
             startDsh()
             Thread.sleep(forTimeInterval: 5)
         }
@@ -28,8 +42,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.contentView!.addSubview(webView)
         webView.navigationDelegate = self
 
+        // Set app icon
+        if let iconPath = Bundle.main.path(forResource: "icon", ofType: "png"),
+           let image = NSImage(contentsOfFile: iconPath) {
+            NSApp.applicationIconImage = image
+        }
+
         window.makeKeyAndOrderFront(nil)
-        webView.load(URLRequest(url: URL(string: "http://127.0.0.1:3080")!))
+        webView.load(URLRequest(url: URL(string: "http://127.0.0.1:\(port)")!))
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return true
     }
 
     func startDsh() {
