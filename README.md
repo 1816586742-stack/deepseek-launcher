@@ -4,6 +4,8 @@
 
 > 轻量级 DeepSeek Harness 全平台启动器 — 脚本版 0 KB,桌面版 642 KB
 
+![Desktop Preview](assets/desktop-preview.png)
+
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![Version](https://img.shields.io/badge/Version-v0.3.4-green)
 
