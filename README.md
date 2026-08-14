@@ -68,10 +68,17 @@ python3 launcher.py
 ## 功能
 
 - 🚀 **自动拉起 dsh**: 检测端口,没开就 `npx -y @deepseek-ai/dsh web`
-- 🔄 **自动更新**: 启动时检查 GitHub Releases
+- 🔄 **手动更新**: 设置面板 → Check for updates(不自动打扰)
 - ⚙️ **设置面板**: 右键 → Settings(端口/auto-start)
 - 🐳 **DeepSeek 鲸鱼图标**: 官方 logo
 - 🔗 **智能链接**: 外部链接走系统浏览器
+
+## 更新方式
+
+DSH Launcher 不会自动检查更新。手动更新:
+1. 打开设置面板(右键 → Settings)
+2. 点击 "Check for updates"
+3. 有新版本时会提示打开下载页面
 
 ## 工作原理
 

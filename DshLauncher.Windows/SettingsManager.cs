@@ -71,9 +71,25 @@ internal static class SettingsManager
         var btnSave = new Button
         {
             Text = "Save",
-            Location = new Point(120, 130),
+            Location = new Point(20, 130),
             Width = 100,
             DialogResult = DialogResult.OK
+        };
+
+        var btnCheckUpdate = new Button
+        {
+            Text = "Check for updates",
+            Location = new Point(140, 130),
+            Width = 150,
+        };
+
+        btnCheckUpdate.Click += async (_, _) =>
+        {
+            btnCheckUpdate.Enabled = false;
+            btnCheckUpdate.Text = "Checking...";
+            var hasUpdate = await UpdateChecker.CheckAndPromptAsync();
+            btnCheckUpdate.Text = hasUpdate ? "Update available!" : "Up to date";
+            btnCheckUpdate.Enabled = true;
         };
 
         btnSave.Click += (_, _) =>
@@ -84,7 +100,7 @@ internal static class SettingsManager
             Save();
         };
 
-        form.Controls.AddRange([lblPort, txtPort, chkAuto, btnSave]);
+        form.Controls.AddRange([lblPort, txtPort, chkAuto, btnSave, btnCheckUpdate]);
         form.AcceptButton = btnSave;
 
         form.ShowDialog();
