@@ -1,21 +1,13 @@
 import Cocoa
 import WebKit
 
+@main
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     var webView: WKWebView!
     let defaultUrl = "http://127.0.0.1:3080"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Single instance check via distributed notification center
-        let running = NSWorkspace.shared.runningApplications.filter {
-            $0.bundleIdentifier == Bundle.main.bundleIdentifier
-        }
-        if running.count > 1 {
-            NSApp.terminate(nil)
-            return
-        }
-
         // Auto-start dsh if not running
         if !portOpen(port: 3080) {
             startDsh()
@@ -89,7 +81,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 extension AppDelegate: WKNavigationDelegate {
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        if let url = navigationAction.request.url, !url.host!.contains("127.0.0.1") {
+        if let url = navigationAction.request.url, let host = url.host, !host.contains("127.0.0.1") {
             NSWorkspace.shared.open(url)
             decisionHandler(.cancel)
         } else {
@@ -97,9 +89,3 @@ extension AppDelegate: WKNavigationDelegate {
         }
     }
 }
-
-// Entry point
-let app = NSApplication.shared
-let delegate = AppDelegate()
-app.delegate = delegate
-app.run()
