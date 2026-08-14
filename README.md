@@ -5,18 +5,17 @@
 > 轻量级 DeepSeek Harness 全平台启动器 — 脚本版 0 KB,桌面版 642 KB
 
 ![License](https://img.shields.io/badge/License-MIT-blue)
-![Version](https://img.shields.io/badge/Version-v0.2.0-green)
+![Version](https://img.shields.io/badge/Version-v0.3.4-green)
 
-## 为什么选择 DSH Launcher?
+## 特性
 
-| | DSH Launcher | dsh-launcher (Ruler4396) | DSH Shell (Electron) |
-|---|---|---|---|
-| 体积 | **642 KB** | 672 KB | 135 MB |
-| 平台 | Win/Mac/Linux | 仅 Windows | Win/Mac/Linux |
-| dsh | npx 按需拉取 | npx 按需拉取 | 打包在内 |
-| 插件 | ✅ | ✅ | ❌ |
-| 自动更新 | ✅ | ✅ | ❌ |
-| 设置面板 | ✅ | ✅ | ✅ |
+- 🚀 **极轻量**: 脚本版 0 KB,桌面版仅 642 KB
+- 🌍 **全平台**: Windows / macOS / Linux
+- 🐳 **按需拉取 dsh**: 通过 `npx` 自动获取最新版本,插件完全兼容
+- 🔄 **自动更新**: 启动时检查 GitHub Releases(可跳过版本)
+- ⚙️ **设置面板**: 端口配置 / 开机自启 / 语言切换
+- 🐳 **DeepSeek 鲸鱼图标**: 官方 logo 嵌入
+- 📋 **专业更新对话框**: 版本对比 + 分类更新日志(参考 Bili23 设计)
 
 ## 快速开始
 
