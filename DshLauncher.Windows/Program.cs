@@ -102,6 +102,17 @@ internal static class Program
             web.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
             web.CoreWebView2.Settings.AreDevToolsEnabled = true;
 
+            // Auto-grant permissions dsh plugins rely on; mic/camera stay denied
+            web.CoreWebView2.PermissionRequested += (_, e) =>
+            {
+                if (e.PermissionKind is CoreWebView2PermissionKind.Notifications
+                    or CoreWebView2PermissionKind.ClipboardRead
+                    or CoreWebView2PermissionKind.Autoplay
+                    or CoreWebView2PermissionKind.MultipleAutomaticDownloads
+                    or CoreWebView2PermissionKind.PersistentStorage)
+                    e.State = CoreWebView2PermissionState.Allow;
+            };
+
             // Open external links in system browser
             web.CoreWebView2.NewWindowRequested += (_, e) =>
             {
@@ -112,10 +123,87 @@ internal static class Program
                 }
             };
 
+            // Renderer crash / unresponsive → auto reload (throttled 10s)
+            var lastReloadTick = 0L;
+            web.CoreWebView2.ProcessFailed += (_, e) =>
+            {
+                if (e.ProcessFailedKind is CoreWebView2ProcessFailedKind.RenderProcessExited
+                    or CoreWebView2ProcessFailedKind.RenderProcessUnresponsive)
+                {
+                    var now = Environment.TickCount64;
+                    if (now - lastReloadTick > 10_000)
+                    {
+                        lastReloadTick = now;
+                        try { web.CoreWebView2.Reload(); } catch { /* ignore */ }
+                    }
+                }
+            };
+
             web.CoreWebView2.Navigate(DefaultUrl);
+
+            // Tray icon: host for session-done notifications, double-click restores window
+            var tray = new NotifyIcon
+            {
+                Icon = icon ?? SystemIcons.Application,
+                Text = "DeepSeek Harness",
+                Visible = true,
+            };
+            tray.DoubleClick += (_, _) => ShowAndFocus(form);
+            form.FormClosing += (_, _) =>
+            {
+                try { tray.Visible = false; tray.Dispose(); } catch { /* ignore */ }
+            };
+
+            // Session-done notifications: watch <DSH_HOME>/sessions for incremental
+            // zstd session logs; balloon tip when a top-level turn ends.
+            var dshHome = Environment.GetEnvironmentVariable("DSH_HOME");
+            if (string.IsNullOrWhiteSpace(dshHome))
+                dshHome = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dsh");
+            var sessionsDir = Path.Combine(dshHome, "sessions");
+            var watcher = new SessionWatcher(sessionsDir, ev =>
+            {
+                try
+                {
+                    tray.BalloonTipTitle = ev.Title;
+                    tray.BalloonTipText = ev.Body;
+                    tray.ShowBalloonTip(8000);
+                }
+                catch { /* tray disposed */ }
+            });
+            watcher.Start();
+            form.FormClosing += (_, _) => watcher.Dispose();
+
+            // dsh service watchdog: auto-restart + reload on drop (throttled)
+            var vbs = Path.Combine(AppContext.BaseDirectory, "start-dsh.vbs");
+            var watchdog = new WatchdogService(Port, vbs, () =>
+            {
+                try
+                {
+                    if (!web.IsDisposed && web.CoreWebView2 is not null)
+                        web.CoreWebView2.Reload();
+                }
+                catch { /* window closed */ }
+            });
+            watchdog.Start();
+            form.FormClosing += (_, _) => watchdog.Dispose();
         };
 
         Application.Run(form);
+    }
+
+    private static void ShowAndFocus(Form form)
+    {
+        try
+        {
+            if (form.WindowState == FormWindowState.Minimized)
+                form.WindowState = FormWindowState.Normal;
+            form.Show();
+            form.Activate();
+            form.TopMost = true;
+            form.TopMost = false;
+        }
+        catch { /* ignore */ }
     }
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]

@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.3.5 (2026-08-15)
+
+### Added
+- Session-done notifications: watches `<DSH_HOME>/sessions` zstd logs incrementally (baseline + tail-only decode, 5s directory cache) and shows a tray balloon when a top-level agent turn ends; title from session/title, body carries cwd tail + short session id, multi-turn count; subagent logs ignored
+- Tray icon: hosts notifications, double-click restores/focuses the window
+- dsh service watchdog: polls the port every 5s, silently restarts the service via start-dsh.vbs on drop and reloads the page after recovery; throttled to 5 restarts per 10 minutes
+- Renderer crash recovery: auto-reload on render process exit/unresponsive (10s throttle)
+- Plugin permission auto-grant: notifications / clipboard / autoplay / multi-download / persistent storage (mic/camera stay denied)
+- ZstdFrames + SessionWatcher unit/integration tests (16 new, 26 total)
+
+### Changed
+- dsh service port check now reuses WatchdogService.PortOpen
+
 ## v0.3.4 (2026-08-14)
 
 ### Added
