@@ -1,119 +1,94 @@
-# DSH Launcher
+# DeepSeek Launcher
 
-[English](README.md) | 中文
+[English](README.en.md) | 中文
 
-> 轻量级 DeepSeek Harness 全平台启动器 — 脚本版 0 KB,桌面版 642 KB
-
-![Desktop Preview](assets/desktop-preview.png)
+> 轻量级 C# WebView2 壳启动器 — 对标 DSH Desktop 全部核心功能
 
 ![License](https://img.shields.io/badge/License-MIT-blue)
-![Version](https://img.shields.io/badge/Version-v0.3.4-green)
-
-## 特性
-
-- 🚀 **极轻量**: 脚本版 0 KB,桌面版仅 642 KB
-- 🌍 **全平台**: Windows / macOS / Linux
-- 🐳 **按需拉取 dsh**: 通过 `npx` 自动获取最新版本,插件完全兼容
-- 🔄 **更新检查**: 启动时自动检查 GitHub Releases(可跳过版本),或在设置中手动检查
-- ⚙️ **设置面板**: 端口配置 / 开机自启 / 语言切换
-- 🐳 **DeepSeek 鲸鱼图标**: 官方 logo 嵌入
-- 📋 **专业更新对话框**: 版本对比 + 分类更新日志(参考 Bili23 设计)
-
-## 快速开始
-
-### 脚本版(开发者,0 KB)
-
-需要 Node.js 18+:
-
-**Windows**: 双击 `scripts/start-dsh.bat`
-
-**macOS/Linux**:
-```bash
-chmod +x scripts/start-dsh.sh
-./scripts/start-dsh.sh
-```
-
-### 桌面版(普通用户)
-
-从 [Releases](https://github.com/1816586742-stack/dsh-launcher-cross/releases) 下载:
-
-| 文件 | 平台 | 说明 |
-|---|---|---|
-| `dsh-launcher_win_x64.zip` | Windows | 解压运行 DshLauncher.Windows.exe |
-| `dsh-launcher_macos.tar.gz` | macOS | 解压后编译或直接运行脚本 |
-| `dsh-launcher_linux.tar.gz` | Linux | 解压后运行 launcher.py |
-
-### 从源码编译
-
-**Windows** (.NET SDK 10 + WebView2):
-```bash
-cd DshLauncher.Windows
-dotnet run
-```
-
-**macOS** (Swift + WebKit):
-```bash
-cd DshLauncher.MacOS
-swiftc main.swift -o dsh-launcher -framework Cocoa -framework WebKit
-./dsh-launcher
-```
-
-**Linux** (Python + GTK4):
-```bash
-cd DshLauncher.Linux
-pip install pygobject
-python3 launcher.py
-```
-需要: `sudo apt install libgtk-4-dev libwebkitgtk-6.0-dev`
+![Version](https://img.shields.io/badge/Version-v0.3.7-green)
+![Tests](https://img.shields.io/badge/Tests-87%20passed-brightgreen)
 
 ## 功能
 
-- 🚀 **自动拉起 dsh**: 检测端口,没开就 `npx -y @deepseek-ai/dsh web`
-- 🔄 **手动更新**: 设置面板 → Check for updates(不自动打扰)
-- ⚙️ **设置面板**: 右键 → Settings(端口/auto-start)
-- 🐳 **DeepSeek 鲸鱼图标**: 官方 logo
-- 🔗 **智能链接**: 外部链接走系统浏览器
+- 🚀 **极轻量**: 单文件 ~1.7 MB,无 Electron,无 Node 打包
+- 🐳 **自动拉起 dsh**: 端口未就绪时自动启动 dsh 服务(复用 npx)
+- 🔄 **服务看门狗**: 每 5s 探测端口,服务断开自动重启 + 页面重载
+- 📢 **会话完成通知**: 增量监视 zstd 会话日志,agent 轮次结束弹托盘通知
+- 💰 **余额查询**: 右键菜单一键查 DeepSeek 账户余额
+- 📥 **智能下载**: Content-Disposition 解析 + MIME 扩展名补全 + 安全扩展白名单自动打开
+- 🪟 **弹窗分类**: 外部链接→系统浏览器,同源弹窗→壳内窗口(保留会话)
+- 🎨 **启动动画**: 鲸鱼 logo + loading + "正在启动..." 等待页
+- 📋 **完整右键菜单**: Reload / DevTools / Fullscreen / Open in Browser / Open Log Dir
+- 🔒 **最小化到托盘**: 关闭窗口不退出,双击托盘恢复
+- 🛡️ **渲染崩溃自愈**: 渲染进程崩溃/无响应自动重载(10s 节流)
+- ⚙️ **设置面板**: 端口配置 / 开机自启
+- 🔄 **自动更新检查**: 启动时检查 GitHub Releases(可跳过版本)
+- 🐳 **鲸鱼娘图标**: CC BY-NC-SA 4.0 授权
 
-## 更新方式
+## 快速开始
 
-DSH Launcher 不会自动检查更新。手动更新:
-1. 打开设置面板(右键 → Settings)
-2. 点击 "Check for updates"
-3. 有新版本时会提示打开下载页面
+### Windows
 
-## 工作原理
+1. 下载 [最新 Release](https://github.com/1816586742-stack/deepseek-launcher/releases/tag/v0.3.7) 的 `dsh-launcher-v0.3.7_win_x64.zip`
+2. 解压到任意目录
+3. 双击 `DshLauncher.Windows.exe`
+
+**前置要求**:
+- .NET Desktop Runtime 10 (Windows 11 已内置)
+- WebView2 Runtime (Windows 10/11 通常已自带)
+- Node.js 18+ (dsh 服务需要)
+
+### 从源码构建
+
+```bash
+git clone https://github.com/1816586742-stack/deepseek-launcher.git
+cd deepseek-launcher
+cd DshLauncher.Windows
+dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
+```
+
+## 项目结构
 
 ```
-启动 → 检测端口 3080 → 没开? → npx -y @deepseek-ai/dsh web
-                         ↓
-                    等待就绪(最多90秒)
-                         ↓
-                    系统 WebView → http://127.0.0.1:3080
+DshLauncher.Windows/         # C# + WebView2 (主项目)
+  Program.cs                 # 窗口/菜单/托盘/启动动画
+  ShellLogic.cs              # 弹窗分类/下载/权限策略(纯逻辑,可测试)
+  SessionWatcher.cs          # zstd 会话日志监视
+  WatchdogService.cs         # dsh 服务看门狗
+  BalanceService.cs          # 余额查询
+  ZstdFrames.cs              # zstd 帧结构扫描
+  SplashScreen.cs            # 启动动画
+  UpdateChecker.cs           # 自动更新检查
+  SettingsManager.cs         # 设置持久化
+  UpdateDialog.cs            # 更新对话框(Bili23 风格)
+  AboutDialog.cs             # 关于对话框
+tests/                       # xunit 单元测试 (87 个)
 ```
 
-## 架构决策
+## 右键菜单
 
-详见 [docs/adr/001-architecture-decisions.md](docs/adr/001-architecture-decisions.md)
+| 功能 | 快捷键 |
+|------|--------|
+| Settings | — |
+| Balance | — |
+| About | — |
+| Reload | Ctrl+R |
+| DevTools | F12 |
+| Fullscreen | F11 |
+| Open in Browser | — |
+| Open Log Dir | — |
+| Exit | — |
 
-## 贡献
+## 依赖
 
-欢迎贡献!详见 [CONTRIBUTING.md](CONTRIBUTING.md)
+| 包 | 版本 | 用途 |
+|---|---|---|
+| Microsoft.Web.WebView2 | 1.0.4129.50 | WebView2 控件 |
+| ZstdSharp.Port | 0.8.8 | zstd 解压(纯托管) |
+| xunit | 2.9.3 | 单元测试 |
 
-## 免责声明
+## 许可
 
-本项目是独立的第三方工具，与 DeepSeek / DeepSeek AI 官方无关。
+MIT License — Copyright (c) 2026 dsh-launcher contributors
 
-## 图标说明
-
-应用图标使用了 [DeepSeek Harness 鲸鱼娘图标](https://github.com/DeepSeekHarness/WhaleGirl-Icon)，基于 DeepSeek 品牌标识创作。
-
-- 许可证：CC BY-NC-SA 4.0
-- 署名：DeepSeek Harness 鲸鱼娘图标项目
-- 仅限非商业用途
-- 衍生作品必须使用相同许可证
-
-详见 [WHALE-GIRL-LICENSE.md](assets/WHALE-GIRL-LICENSE.md)
-
-## 软件许可证
-
-本软件使用 [MIT](LICENSE) 许可证。
+图标: 鲸鱼娘 (CC BY-NC-SA 4.0)
