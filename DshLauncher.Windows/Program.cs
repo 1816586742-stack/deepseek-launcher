@@ -81,9 +81,20 @@ internal static class Program
         var web = new WebView2 { Dock = DockStyle.Fill };
         form.Controls.Add(web);
 
-        // Context menu: Settings / About / Exit
+        // Context menu: Settings / Balance / About / Exit
         var menu = new ContextMenuStrip();
         menu.Items.Add("Settings", null, (_, _) => SettingsManager.ShowDialog());
+        menu.Items.Add("Balance", null, async (_, _) =>
+        {
+            try
+            {
+                var dshHome = GetDshHome();
+                var result = await BalanceService.QueryBalanceAsync(dshHome);
+                MessageBox.Show(BalanceService.FormatForNotification(result), "DeepSeek Balance",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch { /* ignore */ }
+        });
         menu.Items.Add("About", null, (_, _) => { var dlg = new AboutDialog(); dlg.ShowDialog(); });
         menu.Items.Add("-");
         menu.Items.Add("Exit", null, (_, _) => { web.Dispose(); Application.Exit(); });
@@ -105,22 +116,77 @@ internal static class Program
             // Auto-grant permissions dsh plugins rely on; mic/camera stay denied
             web.CoreWebView2.PermissionRequested += (_, e) =>
             {
-                if (e.PermissionKind is CoreWebView2PermissionKind.Notifications
-                    or CoreWebView2PermissionKind.ClipboardRead
-                    or CoreWebView2PermissionKind.Autoplay
-                    or CoreWebView2PermissionKind.MultipleAutomaticDownloads
-                    or CoreWebView2PermissionKind.PersistentStorage)
+                if (ShellLogic.IsAutoGrantedPermission(e.PermissionKind))
                     e.State = CoreWebView2PermissionState.Allow;
             };
 
-            // Open external links in system browser
-            web.CoreWebView2.NewWindowRequested += (_, e) =>
+            // Popup classification: external http(s) → system browser; same-origin
+            // popup → lightweight in-shell window (session preserved); blob:/data: → default.
+            web.CoreWebView2.NewWindowRequested += async (_, e) =>
             {
-                if (!e.Uri.Contains("127.0.0.1"))
+                switch (ShellLogic.ClassifyPopup(e.Uri))
                 {
-                    e.Handled = true;
-                    Process.Start(new ProcessStartInfo(e.Uri) { UseShellExecute = true });
+                    case ShellLogic.PopupTarget.External:
+                        e.Handled = true;
+                        try { Process.Start(new ProcessStartInfo(e.Uri) { UseShellExecute = true }); } catch { /* ignore */ }
+                        return;
+                    case ShellLogic.PopupTarget.Internal:
+                    {
+                        var deferral = e.GetDeferral();
+                        try
+                        {
+                            var popup = CreatePopupForm();
+                            await InitPopupWebViewAsync(popup.Web, env);
+                            popup.Web.CoreWebView2.DocumentTitleChanged += (_, _) =>
+                            {
+                                var title = popup.Web.CoreWebView2.DocumentTitle;
+                                if (!string.IsNullOrWhiteSpace(title)) popup.Form.Text = title;
+                            };
+                            e.NewWindow = popup.Web.CoreWebView2;
+                            popup.Form.Show();
+                        }
+                        catch { /* fall through to default */ }
+                        finally { deferral.Complete(); }
+                        return;
+                    }
+                    default:
+                        return;
                 }
+            };
+
+            // Downloads: fixed to the system Downloads folder, same-name auto-rename,
+            // blob: gets an extension from MIME; safe extensions auto-open when done.
+            web.CoreWebView2.DownloadStarting += (_, e) =>
+            {
+                try
+                {
+                    var downloads = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+                    Directory.CreateDirectory(downloads);
+                    var name = ShellLogic.SanitizeFileName(ShellLogic.SuggestDownloadName(
+                        e.DownloadOperation.ContentDisposition, e.DownloadOperation.Uri, e.DownloadOperation.MimeType));
+                    var path = Path.Combine(downloads, name);
+                    for (var i = 1; File.Exists(path); i++)
+                        path = Path.Combine(downloads,
+                            $"{Path.GetFileNameWithoutExtension(name)} ({i}){Path.GetExtension(name)}");
+                    e.Handled = true; // suppress the default download dialog
+                    e.ResultFilePath = path;
+                    if (ShellLogic.IsSafeToAutoOpen(name))
+                    {
+                        e.DownloadOperation.StateChanged += (_, _) =>
+                        {
+                            if (e.DownloadOperation.State == CoreWebView2DownloadState.Completed)
+                            {
+                                try
+                                {
+                                    Process.Start(new ProcessStartInfo(e.DownloadOperation.ResultFilePath) { UseShellExecute = true });
+                                }
+                                catch { /* no default app; ignore */ }
+                            }
+                        };
+                    }
+                }
+                catch { /* fall back to WebView2 default download behavior */ }
             };
 
             // Renderer crash / unresponsive → auto reload (throttled 10s)
@@ -156,11 +222,7 @@ internal static class Program
 
             // Session-done notifications: watch <DSH_HOME>/sessions for incremental
             // zstd session logs; balloon tip when a top-level turn ends.
-            var dshHome = Environment.GetEnvironmentVariable("DSH_HOME");
-            if (string.IsNullOrWhiteSpace(dshHome))
-                dshHome = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dsh");
-            var sessionsDir = Path.Combine(dshHome, "sessions");
+            var sessionsDir = Path.Combine(GetDshHome(), "sessions");
             var watcher = new SessionWatcher(sessionsDir, ev =>
             {
                 try
@@ -206,12 +268,59 @@ internal static class Program
         catch { /* ignore */ }
     }
 
+    /// <summary>Resolve DSH_HOME (env var or ~/.dsh default).</summary>
+    private static string GetDshHome()
+    {
+        var dshHome = Environment.GetEnvironmentVariable("DSH_HOME");
+        return string.IsNullOrWhiteSpace(dshHome)
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dsh")
+            : dshHome;
+    }
+
+    /// <summary>Lightweight window for same-origin plugin popups, sharing the main
+    /// window's WebView2 environment (keeps session/login state).</summary>
+    private static (Form Form, WebView2 Web) CreatePopupForm()
+    {
+        var popupWeb = new WebView2 { Dock = DockStyle.Fill };
+        var form = new Form
+        {
+            Text = "DeepSeek Harness",
+            ClientSize = new Size(900, 640),
+            StartPosition = FormStartPosition.CenterParent,
+            Icon = SystemIcons.Application
+        };
+        form.Controls.Add(popupWeb);
+        form.FormClosing += (_, _) =>
+        {
+            try { popupWeb.Dispose(); } catch { /* ignore */ }
+        };
+        return (form, popupWeb);
+    }
+
+    /// <summary>Initialize a popup WebView with the same settings as the main window.</summary>
+    private static async Task InitPopupWebViewAsync(WebView2 popupWeb, CoreWebView2Environment env)
+    {
+        await popupWeb.EnsureCoreWebView2Async(env);
+        popupWeb.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+        popupWeb.CoreWebView2.Settings.AreDevToolsEnabled = true;
+        popupWeb.CoreWebView2.PermissionRequested += (_, e) =>
+        {
+            if (ShellLogic.IsAutoGrantedPermission(e.PermissionKind))
+                e.State = CoreWebView2PermissionState.Allow;
+        };
+        // popups inside popups: external links still go to the system browser
+        popupWeb.CoreWebView2.NewWindowRequested += (_, e) =>
+        {
+            if (ShellLogic.ClassifyPopup(e.Uri) == ShellLogic.PopupTarget.External)
+            {
+                e.Handled = true;
+                try { Process.Start(new ProcessStartInfo(e.Uri) { UseShellExecute = true }); } catch { /* ignore */ }
+            }
+        };
+    }
+
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr FindWindow(string? cls, string? title);
 
-    private static bool PortOpen(int port)
-    {
-        try { using var c = new TcpClient(); c.Connect("127.0.0.1", port); return true; }
-        catch { return false; }
-    }
+    private static bool PortOpen(int port) => WatchdogService.PortOpen(port);
 }

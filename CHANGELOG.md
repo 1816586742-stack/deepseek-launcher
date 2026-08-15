@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.6 (2026-08-15)
+
+### Added
+- Download handling: fixed to the system Downloads folder, Content-Disposition/RFC 5987 filename parsing, blob: downloads get an extension from MIME type, same-name auto-rename, reserved device names sanitized (CON/NUL/COM1...); safe extensions (pdf/zip/images/media) auto-open when done, executable surfaces (.html/.svg/.exe...) never auto-open
+- Popup classification: external http(s) links → system browser; same-origin popups → lightweight in-shell window sharing the session; blob:/data:/about: keep default behavior
+- Balance query: right-click → Balance shows the DeepSeek account balance (key from DEEPSEEK_API_KEY env or ~/.dsh/.credentials.yaml; endpoint overridable via DEEPSEEK_BALANCE_URL / DEEPSEEK_API_BASE)
+- ShellLogic + BalanceService unit tests (61 new, 87 total)
+
+### Changed
+- Permission auto-grant policy moved into ShellLogic (shared by main window and popups)
+
 ## v0.3.5 (2026-08-15)
 
 ### Added
