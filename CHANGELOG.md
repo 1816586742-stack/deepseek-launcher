@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.7 (2026-08-15)
+
+### Added
+- Startup splash screen: whale logo + loading spinner + "正在启动..." while dsh service warms up; auto-transition to main window when ready
+- Full right-click menu: Reload (Ctrl+R), DevTools (F12), Fullscreen (F11), Open in Browser, Open Log Dir
+- Close window → minimize to tray (only "Exit" menu item actually quits)
+- UpdateChecker repo path fixed (deepseek-launcher); version aligned to 0.3.6
+
 ## v0.3.6 (2026-08-15)
 
 ### Added
